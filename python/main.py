@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.0.5"
+        self.version: str = "v1.1.0"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -95,7 +95,7 @@ class compiler:
         )
         self.exec: tuple = (
             self.start, None, self.end,
-            None, self.assign, None, self.input, self.print,
+            None, self.assign, None, None, self.print,
             self.if_, None, self.else_,
             self.for_, None, None,
             self.while_, None, self.set, self.jump,
@@ -149,8 +149,7 @@ class compiler:
                 self.error(f"기호는 안돼 임마!('{name}'{end_letter(name)} 기호를 포함함)")
 
     @staticmethod
-    def input(line: str) -> int:
-        _ = line
+    def input() -> int:
         value = input("입력: ")
         while not (value.isnumeric() or (value[0] == "-" and value[1:].isnumeric())):
             print("정수 내놔 정수!")
@@ -179,6 +178,14 @@ class compiler:
                 parts[i] = str(self.call(part[:pos], part[pos:], value.index(part)))
             elif part in self.stack[-1].var:
                 parts[i] = str(self.stack[-1].var[part])
+            elif part == "코":
+                parts[i] = "-3000"
+            elif part.count("ㅖ") == len(part) != 0:
+                parts[i] = str(len(part))
+            elif part.count("언") == len(part) != 0:
+                parts[i] = str(-len(part))
+            elif part == "뽈롱":
+                parts[i] = str(self.input())
             elif not part.isnumeric():
                 self.error(f"뭐 이런 그지 값이 다 있어?('{part}'{end_letter(part)} 없는 변수임)")
         value = "".join(parts)
