@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.0.2"
+        self.version: str = "v1.0.3"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -444,7 +444,8 @@ class compiler:
     def execute(self, stdin="main.mte", stdout=None, *_) -> None:
         global print
         if not os.path.exists(stdin):
-            self.error(f"음 주겨벌랑(방송 파일'{stdin}'{end_letter(stdin, '이', '가')} 없음)")
+            print("이거나드셔:")
+            print(f"음 주겨벌랑(방송 파일'{stdin}'{end_letter(stdin, '이', '가')} 없음)")
         with open(stdin, "r", encoding="utf-8") as f:
             self.lines = list(map(lambda x: x.strip(), f.readlines()))
         if stdout is None:
