@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.0.1"
+        self.version: str = "v1.0.2"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -163,7 +163,15 @@ class compiler:
 
         parts = calc_split(value)
 
+        was_operator = False
         for i, part in enumerate(parts):
+            if part in "+-*/%":
+                if was_operator:
+                    self.error("뭘 계산해 임마!(둘 이상의 연산자가 붙어있음)")
+                was_operator = True
+                continue
+            else:
+                was_operator = False
             if part.startswith("(") and part.startswith(")"):
                 parts[i] = str(self.calc(part))
             elif "(" in part:
@@ -171,7 +179,7 @@ class compiler:
                 parts[i] = str(self.call(part[:pos], part[pos:], value.index(part)))
             elif part in self.stack[-1].var:
                 parts[i] = str(self.stack[-1].var[part])
-            elif not (part.isnumeric() or part in "+-*/%"):
+            elif not part.isnumeric():
                 self.error(f"뭐 이런 그지 값이 다 있어?('{part}'{end_letter(part)} 없는 변수임)")
         value = "".join(parts)
         value = value.replace("/", "//")
