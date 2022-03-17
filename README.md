@@ -247,7 +247,7 @@ Kodrip-lang (코랭)
 코 출력: -6000
 ```
 
-## 실행
+# 실행
 
 (python 구현체를 기준으로 합니다.)  
 터미널에서, kodrip-lang/python 위치로 이동한 뒤,
