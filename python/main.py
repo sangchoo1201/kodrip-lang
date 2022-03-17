@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.1.1"
+        self.version: str = "v1.1.2"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -175,7 +175,8 @@ class compiler:
                 parts[i] = str(self.calc(part))
             elif "(" in part:
                 pos = part.index("(")
-                parts[i] = str(self.call(part[:pos], part[pos:], value.index(part)))
+                line = self.lines[self.stack[-1].cnt-1]
+                parts[i] = str(self.call(part[:pos], part[pos:], line.index(part)))
             elif part in self.stack[-1].var:
                 parts[i] = str(self.stack[-1].var[part])
             elif part == "코":
