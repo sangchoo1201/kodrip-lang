@@ -27,10 +27,7 @@ def end_letter(word: str, yes: Optional[str] = "은", no: Optional[str] = "는")
     elif last_word in "013678":
         return yes
 
-    if (ord(last_word) - ord("가")) % 28:
-        return yes
-    else:
-        return no
+    return yes if (ord(last_word) - ord("가")) % 28 else no
 
 
 def width(value: str):
@@ -51,9 +48,9 @@ def calc_split(line: str) -> List[str]:
     cnt = 0
     positions = []
     for i, text in enumerate(line):
-        if text == "(":
+        if text == "}":
             cnt += 1
-        elif text == ")":
+        elif text == "{":
             cnt -= 1
         if not cnt and text in "+-*/%":
             positions.append(i)
@@ -83,7 +80,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.1.2"
+        self.version: str = "v1.1.3"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -129,7 +126,7 @@ class compiler:
             print("    ", end="")
             if self.stdin:
                 print(f"파일 \"{self.stdin}\", ", end="")
-            print(f"{i.cnt}번 줄, 함수 {i.name}:")
+            print(f"{i.cnt}번 줄, 함수 '{i.name}':")
             line = self.lines[i.cnt-1]
             print(f"      {line}")
             if i.calling:
@@ -173,8 +170,8 @@ class compiler:
                 was_operator = False
             if part.startswith("(") and part.startswith(")"):
                 parts[i] = str(self.calc(part))
-            elif "(" in part:
-                pos = part.index("(")
+            elif "}" in part:
+                pos = part.index("}")
                 line = self.lines[self.stack[-1].cnt-1]
                 parts[i] = str(self.call(part[:pos], part[pos:], line.index(part)))
             elif part in self.stack[-1].var:
@@ -212,9 +209,9 @@ class compiler:
         cnt = 0
         comma = []
         for i, char in enumerate(line):
-            if char == "(":
+            if char == "}":
                 cnt += 1
-            elif char == ")":
+            elif char == "{":
                 cnt -= 1
                 if cnt < 0:
                     self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
@@ -238,13 +235,14 @@ class compiler:
         return self.return_value
 
     def run_func(self) -> None:
+        self.stack[-1].cnt -= 1
         self.return_value = None
         while self.return_value is None:
+            self.stack[-1].cnt += 1
             if self.stack[-1].cnt > len(self.lines):
                 self.lines.append("")
                 self.error("자~숙하자~(방송이 '죄송합니다'로 끝나지 않음)")
             self.execute_line(self.lines[self.stack[-1].cnt-1].strip())
-            self.stack[-1].cnt += 1
 
     def assign(self, line: str) -> None:
         if "를!" not in line:
@@ -384,11 +382,11 @@ class compiler:
         self.stack[-1].cnt = self.stack[-1].jump[line] - 1
 
     def assign_func(self, line: str) -> None:
-        if "(" not in line:
+        if "}" not in line:
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
-        name, line = line.split("(", 1)
+        name, line = line.split("}", 1)
         self.check_name(name)
-        if not line.endswith(")"):
+        if not line.endswith("{"):
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
         if (
             self.stack[-1].control
@@ -418,7 +416,6 @@ class compiler:
         elif len(self.stack) == 1:
             self.error("뭉탱이로 유링게슝(대응하는 함수 선언 구문이 없음)")
         self.stack.pop()
-        self.stack[-1].cnt -= 1
         self.return_value = 0
 
     def return_(self, line: str) -> None:
@@ -426,16 +423,15 @@ class compiler:
             self.error("그 뒤는 안돼 임마!(함수 밖에서 리턴을 사용함)")
         self.return_value = self.calc(line) if line else 0
         self.stack.pop()
-        self.stack[-1].cnt -= 1
 
     def execute_line(self, line: str) -> None:
-        if line.startswith("코 ") or line == "":
+        if line.startswith("코 ") or not line:
             return
         for i, keyword in enumerate(self.keywords):
             if line.startswith(
-                    keyword
-                    if keyword in {"죄송합니다", "안하니?", "유리게슝", "유링게슝"}
-                    else keyword+" "
+                keyword
+                if keyword in {"죄송합니다", "안하니?", "유리게슝", "유링게슝"}
+                else f'{keyword} '
             ):
                 line = line[len(keyword):].strip()
                 do = self.exec[i]
@@ -443,8 +439,8 @@ class compiler:
                     self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
                 do(line)
                 return
-        if "(" in line:
-            pos = line.index("(")
+        if "}" in line:
+            pos = line.index("}")
             self.call(line[:pos], line[pos:])
         else:
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
