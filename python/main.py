@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.1.0"
+        self.version: str = "v1.1.1"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
