@@ -192,15 +192,15 @@ class compiler:
         value = value.replace("/", "//")
         return eval(value)
 
-    def calc_bool(self, value: str) -> bool:
-        cnt = 0
+    def comp(self, value: str) -> bool:
+        comp = ""
         for i in ("==", ">=", "<=", "!=", ">", "<"):
-            cnt += value.count(i)
-            if value.count(i) == 1:
+            if i in value:
+                a, b = map(lambda x: str(self.calc(x)), value.split(i))
                 comp = i
-        if cnt != 1:
-            self.error("뭐 이런 그지 값이 다 있어?(비교 연산자가 하나가 아님)")
-        a, b = map(lambda x: str(self.calc(x)), value.split(comp))
+                break
+        else:
+            self.error("뭐 이런 그지 값이 다 있어?(비교 연산자가 없음)")
         return eval(a + comp + b)
 
     def call(self, name: str, line: str, start: Optional[int] = 0) -> int:
@@ -267,7 +267,7 @@ class compiler:
         pos = line.index("하니?")
         if line[pos+1:]:
             self.error("너 지금 뭐하니?('하니?' 뒤에 다른 멘트가 옴)")
-        if not self.calc_bool(" ".join(line[:pos])):
+        if not self.comp(" ".join(line[:pos])):
             while True:
                 self.stack[-1].cnt += 1
                 if self.stack[-1].cnt > len(self.lines):
@@ -348,7 +348,7 @@ class compiler:
             and self.stack[-1].control[-1].start == self.stack[-1].cnt
         ):
             self.stack[-1].control.append(control("while", self.stack[-1].cnt))
-        value = self.calc_bool(value)
+        value = self.comp(value)
         if not value:
             while True:
                 self.stack[-1].cnt += 1
