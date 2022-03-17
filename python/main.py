@@ -83,7 +83,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.0.4"
+        self.version: str = "v1.0.5"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -167,7 +167,7 @@ class compiler:
         for i, part in enumerate(parts):
             if part in "+-*/%":
                 if was_operator:
-                    self.error("뭘 계산해 임마!(둘 이상의 연산자가 붙어있음)")
+                    self.error("뭐 이런 그지 값이 다 있어?(둘 이상의 연산자가 붙어있음)")
                 was_operator = True
                 continue
             else:
@@ -192,7 +192,7 @@ class compiler:
             if value.count(i) == 1:
                 comp = i
         if cnt != 1:
-            self.error("뭘 비교해 임마!(비교 연산자가 하나가 아님)")
+            self.error("뭐 이런 그지 값이 다 있어?(비교 연산자가 하나가 아님)")
         a, b = map(lambda x: str(self.calc(x)), value.split(comp))
         return eval(a + comp + b)
 
