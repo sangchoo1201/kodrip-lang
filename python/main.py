@@ -48,9 +48,9 @@ def calc_split(line: str) -> List[str]:
     cnt = 0
     positions = []
     for i, text in enumerate(line):
-        if text == "}":
+        if text == "(":
             cnt += 1
-        elif text == "{":
+        elif text == ")":
             cnt -= 1
         if not cnt and text in "+-*/%":
             positions.append(i)
@@ -80,14 +80,13 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.1.3"
+        self.version: str = "v1.2"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
             "얘!", "하니?", "안하니?",
             "죽이고싶은", "와의", "선",
-            "인", "중에는!", "왔어...", "갔어...",
-            "에이씨", "나쁜", "놈",
+            "인", "중에는!", "에이씨", "나쁜", "놈",
             "뭉탱이", "유리게슝", "유링게슝", "지금부터는"
         )
         self.exec: tuple = (
@@ -95,8 +94,7 @@ class compiler:
             None, self.assign, None, None, self.print,
             self.if_, None, self.else_,
             self.for_, None, None,
-            self.while_, None, self.set, self.jump,
-            self.break_, None, None,
+            self.while_, None, self.break_, None, None,
             self.assign_func, self.end_func, self.end_func, self.return_
         )
         self.stack: list = [func("__본방__", 1, {})]
@@ -134,6 +132,22 @@ class compiler:
         print(state)
         sys.exit(1)
 
+    def end_pos(self, cnt: int, sentence: Optional[str] = "에이씨 나쁜 놈") -> int:
+        depth = 0
+        cnt += 1
+        for i in range(cnt, len(self.lines)+1):
+            line = self.lines[i-1].strip()
+            if line.startswith(("얘! ", "인 ", "죽이고싶은 ")):
+                depth += 1
+            elif line == sentence and depth == 0:
+                return i
+            elif line == "에이씨 나쁜 놈":
+                depth -= 1
+            elif line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
+                return -1
+        return -1
+
+
     def check_name(self, name: str) -> None:
         if not name:
             self.error("아무 것도 없잖아 임마!(변수 이름이 없음)")
@@ -168,10 +182,10 @@ class compiler:
                 continue
             else:
                 was_operator = False
-            if part.startswith("(") and part.startswith(")"):
-                parts[i] = str(self.calc(part))
-            elif "}" in part:
-                pos = part.index("}")
+            if part.startswith("(") and part.endswith(")"):
+                parts[i] = str(self.calc(part[1:-1]))
+            elif "(" in part:
+                pos = part.index("(")
                 line = self.lines[self.stack[-1].cnt-1]
                 parts[i] = str(self.call(part[:pos], part[pos:], line.index(part)))
             elif part in self.stack[-1].var:
@@ -224,10 +238,7 @@ class compiler:
             for i, j
             in zip([-1]+comma, comma+[len(line)])
         ]
-        if len(param) != 1 or param[0]:
-            param = list(map(self.calc, param))
-        else:
-            param = []
+        param = list(map(self.calc, param)) if len(param) != 1 or param[0] else []
         if len(param) != len(self.funcs[name]["params"]):
             self.error(f"뭉탱이로 유링게슝({len(self.funcs[name]['params'])}개의 인자가 필요한데, {len(param)}개가 주어짐)")
         self.stack.append(func(name, self.funcs[name]["start"]+1, dict(zip(self.funcs[name]["params"], param))))
@@ -267,36 +278,28 @@ class compiler:
         if line[pos+1:]:
             self.error("너 지금 뭐하니?('하니?' 뒤에 다른 멘트가 옴)")
         if not self.comp(" ".join(line[:pos])):
-            while True:
-                self.stack[-1].cnt += 1
-                if self.stack[-1].cnt > len(self.lines):
-                    self.lines.append("")
-                    self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
-                line = self.lines[self.stack[-1].cnt - 1].strip()
-                if line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
-                    self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
-                if line == "안하니?":
-                    break
-                if line == "에이씨 나쁜 놈":
-                    self.stack[-1].control.pop()
-                    break
+            cnt = self.end_pos(self.stack[-1].cnt, "안하니?")
+            if cnt != -1:
+                self.stack[-1].cnt = cnt
+                return
+            cnt = self.end_pos(self.stack[-1].cnt)
+            if cnt == -1:
+                self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
+            else:
+                self.stack[-1].cnt = cnt
+                self.stack[-1].control.pop()
 
     def else_(self, line: str) -> None:
         if line:
             self.error("너 지금 뭐하니?('안하니?' 뒤에 다른 멘트가 옴)")
         if self.stack[-1].control[-1].type != "if":
             self.error("너 지금 뭐하니?(조건문이 시작하지 않음)")
-        while True:
-            self.stack[-1].cnt += 1
-            if self.stack[-1].cnt > len(self.lines):
-                self.lines.append("")
-                self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
-            line = self.lines[self.stack[-1].cnt - 1].strip()
-            if line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
-                self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
-            if line == "에이씨 나쁜 놈":
-                self.stack[-1].control.pop()
-                break
+        cnt = self.end_pos(self.stack[-1].cnt)
+        if cnt == -1:
+            self.error("너 지금 뭐하니?(조건문이 끝나지 않음)")
+        else:
+            self.stack[-1].cnt = cnt
+            self.stack[-1].control.pop()
 
     def for_(self, line: str) -> None:
         line = line.split(" ")
@@ -319,17 +322,12 @@ class compiler:
         if value < 0:
             self.error(f"죽이고싶은 멘트({value}번 반복할 수는 없음)")
         if self.stack[-1].var[name] >= value:
-            while True:
-                self.stack[-1].cnt += 1
-                if self.stack[-1].cnt > len(self.lines):
-                    self.lines.append("")
-                    self.error("죽이고싶은 멘트(반복문이 끝나지 않음)")
-                line = self.lines[self.stack[-1].cnt - 1].strip()
-                if line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
-                    self.error("죽이고싶은 멘트(반복문이 끝나지 않음)")
-                if line == "에이씨 나쁜 놈":
-                    self.stack[-1].control.pop()
-                    break
+            cnt = self.end_pos(self.stack[-1].cnt)
+            if cnt == -1:
+                self.error("죽이고싶은 멘트(반복문이 끝나지 않음)")
+            else:
+                self.stack[-1].cnt = cnt
+                self.stack[-1].control.pop()
         else:
             self.stack[-1].var[name] += 1
 
@@ -349,17 +347,12 @@ class compiler:
             self.stack[-1].control.append(control("while", self.stack[-1].cnt))
         value = self.comp(value)
         if not value:
-            while True:
-                self.stack[-1].cnt += 1
-                if self.stack[-1].cnt > len(self.lines):
-                    self.lines.append("")
-                    self.error("인 방송 중에는!(반복문이 끝나지 않음)")
-                line = self.lines[self.stack[-1].cnt - 1].strip()
-                if line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
-                    self.error("인 방송 중에는!(반복문이 끝나지 않음)")
-                if line == "에이씨 나쁜 놈":
-                    self.stack[-1].control.pop()
-                    break
+            cnt = self.end_pos(self.stack[-1].cnt)
+            if cnt == -1:
+                self.error("인 방송 중에는!(반복문이 끝나지 않음)")
+            else:
+                self.stack[-1].cnt = cnt
+                self.stack[-1].control.pop()
 
     def break_(self, line: str) -> None:
         if line != "나쁜 놈":
@@ -371,15 +364,6 @@ class compiler:
             self.stack[-1].control.pop()
         elif T in {"for", "while"}:
             self.stack[-1].cnt = self.stack[-1].control[-1].start - 1
-
-    def set(self, line: str) -> None:
-        self.check_name(line)
-        self.stack[-1].jump[line] = self.stack[-1].cnt
-
-    def jump(self, line: str) -> None:
-        if line not in self.stack[-1].jump:
-            self.error(f"없어...('{line}'{end_letter(line, '', '이')}라는 라벨은 없음)")
-        self.stack[-1].cnt = self.stack[-1].jump[line] - 1
 
     def assign_func(self, line: str) -> None:
         if "}" not in line:
