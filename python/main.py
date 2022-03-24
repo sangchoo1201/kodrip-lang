@@ -80,7 +80,7 @@ class control:
 
 class compiler:
     def __init__(self):
-        self.version: str = "v1.2"
+        self.version: str = "v1.2.1"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
             "코", "자~", "를!", "뽈롱", "오옹!",
@@ -223,9 +223,9 @@ class compiler:
         cnt = 0
         comma = []
         for i, char in enumerate(line):
-            if char == "}":
+            if char == "(":
                 cnt += 1
-            elif char == "{":
+            elif char == ")":
                 cnt -= 1
                 if cnt < 0:
                     self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
@@ -366,11 +366,11 @@ class compiler:
             self.stack[-1].cnt = self.stack[-1].control[-1].start - 1
 
     def assign_func(self, line: str) -> None:
-        if "}" not in line:
+        if "(" not in line:
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
-        name, line = line.split("}", 1)
+        name, line = line.split("(", 1)
         self.check_name(name)
-        if not line.endswith("{"):
+        if not line.endswith(")"):
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
         if (
             self.stack[-1].control
@@ -423,8 +423,8 @@ class compiler:
                     self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
                 do(line)
                 return
-        if "}" in line:
-            pos = line.index("}")
+        if "(" in line:
+            pos = line.index("(")
             self.call(line[:pos], line[pos:])
         else:
             self.error("음 주겨벌랑(실행 가능한 구문이 아님)")
