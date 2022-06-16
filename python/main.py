@@ -4,6 +4,7 @@ import sys
 
 print = print
 
+
 def end_letter(word: str, yes: Optional[str] = "은", no: Optional[str] = "는") -> str:
     last_word = word[-1]
     while last_word == "_":
@@ -62,6 +63,7 @@ def calc_split(line: str) -> List[str]:
             parts.append(line[e])
     return parts
 
+
 class func:
     def __init__(self, name: str, start: int, param: dict):
         self.name: str = name
@@ -83,7 +85,7 @@ class compiler:
         self.version: str = "v1.2.1"
         self.keywords: tuple = (
             "안녕하세요", "저는", "죄송합니다",
-            "코", "자~", "를!", "뽈롱", "오옹!",
+            "코", "자~", "를!", "뽈롱", "오옹!", "으시안!",
             "얘!", "하니?", "안하니?",
             "죽이고싶은", "와의", "선",
             "인", "중에는!", "에이씨", "나쁜", "놈",
@@ -91,7 +93,7 @@ class compiler:
         )
         self.exec: tuple = (
             self.start, None, self.end,
-            None, self.assign, None, None, self.print,
+            None, self.assign, None, None, self.print, self.print_str,
             self.if_, None, self.else_,
             self.for_, None, None,
             self.while_, None, self.break_, None, None,
@@ -102,6 +104,8 @@ class compiler:
         self.stdin: str = ""
         self.stdout: str = ""
         self.funcs: dict = {}
+        self.include: set = set()
+        self.list: List[int] = []
         self.return_value = 0
 
     def write_file(self, *args: Any, end: Optional[str] = "\n", sep: Optional[str] = " "):
@@ -143,10 +147,11 @@ class compiler:
                 return i
             elif line == "에이씨 나쁜 놈":
                 depth -= 1
+                if depth < 0:
+                    return -1
             elif line in {"유링게슝", "유리게슝"} or line.startswith("뭉탱이"):
                 return -1
         return -1
-
 
     def check_name(self, name: str) -> None:
         if not name:
@@ -155,7 +160,7 @@ class compiler:
             self.error(f"키워드는 안돼 임마!('{name}'{end_letter(name)} 키워드임)")
         if name[0].isnumeric():
             self.error(f"숫자는 안돼 임마!('{name}'{end_letter(name)} 숫자로 시작함)")
-        for i in "+-*/%()<>=.,?!~ ":
+        for i in "+-*/%()<>=.,?!~# ":
             if i in name:
                 self.error(f"기호는 안돼 임마!('{name}'{end_letter(name)} 기호를 포함함)")
 
@@ -172,6 +177,7 @@ class compiler:
             self.error("아무 것도 없잖아 임마!(연산 식에서 중간이 빔)")
 
         parts = calc_split(value)
+        print(parts)
 
         was_operator = False
         for i, part in enumerate(parts):
@@ -268,6 +274,9 @@ class compiler:
 
     def print(self, line: str) -> None:
         print(self.calc(line))
+
+    def print_str(self, line: str) -> None:
+        print(chr(abs(self.calc(line))), end="")
 
     def if_(self, line: str) -> None:
         self.stack[-1].control.append(control("if", self.stack[-1].cnt))
@@ -378,7 +387,7 @@ class compiler:
         ):
             self.error("뭉탱이로 유링게슝(함수 안에서 함수를 작성함)")
         line = line[:-1]
-        names = line.split(",")
+        names = list(map(lambda x: x.strip(), line.split(",")))
         if len(names) == 1 and not names[0]:
             names = []
         else:

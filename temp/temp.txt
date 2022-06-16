@@ -1,0 +1,30 @@
+Statements[
+  FuncDef(
+    팩토리얼,
+    List[변수],
+    Statements[
+      If(
+        BinOp(Access(변수), EE, Number(0)),
+        Statements[
+          Return(Number(1))
+        ],
+        None
+      ),
+      Return(
+        BinOp(
+          Access(변수),
+          MUL,
+          FuncCall(
+            Access(팩토리얼),
+            List[BinOp(Access(변수), MINUS, Number(1))]
+          )
+        )
+      )
+    ]
+  ),
+  Assign(
+    결과,
+    FuncCall(Access(팩토리얼), List[Number(20)])
+  ),
+  Print(Access(결과))
+]
